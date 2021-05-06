@@ -17,6 +17,7 @@ trait JwtJsonCommon[J, H, C] extends JwtCore[H, C] {
   protected def getAlgorithm(header: J): Option[JwtAlgorithm]
 
   protected def extractAlgorithm(header: JwtHeader): Option[JwtAlgorithm] = header.algorithm
+  protected def extractKeyId(header: JwtHeader): Option[String] = header.keyId
   protected def extractExpiration(claim: JwtClaim): Option[Long] = claim.expiration
   protected def extractNotBefore(claim: JwtClaim): Option[Long] = claim.notBefore
 
@@ -88,10 +89,27 @@ trait JwtJsonCommon[J, H, C] extends JwtCore[H, C] {
 
   def decodeJsonAll(
       token: String,
+      keys: Map[String, String],
+      algorithms: => Seq[JwtAsymmetricAlgorithm],
+      options: JwtOptions
+  ): Try[(J, J, String)] =
+    decodeRawAll(token, keys, algorithms, options).map { tuple =>
+      (parse(tuple._1), parse(tuple._2), tuple._3)
+    }
+
+  def decodeJsonAll(
+      token: String,
       key: String,
       algorithms: => Seq[JwtAsymmetricAlgorithm]
   ): Try[(J, J, String)] =
     decodeJsonAll(token, key, algorithms, JwtOptions.DEFAULT)
+
+  def decodeJsonAll(
+      token: String,
+      keys: Map[String, String],
+      algorithms: => Seq[JwtAsymmetricAlgorithm]
+  ): Try[(J, J, String)] =
+    decodeJsonAll(token, keys, algorithms, JwtOptions.DEFAULT)
 
   def decodeJsonAll(
       token: String,
@@ -128,16 +146,39 @@ trait JwtJsonCommon[J, H, C] extends JwtCore[H, C] {
 
   def decodeJsonAll(
       token: String,
+      keys: Map[String, PublicKey],
+      algorithms: Seq[JwtAsymmetricAlgorithm],
+      options: JwtOptions
+  ): Try[(J, J, String)] =
+    decodeRawAll(token, keys, algorithms, options).map { tuple =>
+      (parse(tuple._1), parse(tuple._2), tuple._3)
+    }
+
+  def decodeJsonAll(
+      token: String,
       key: PublicKey,
       algorithms: Seq[JwtAsymmetricAlgorithm]
   ): Try[(J, J, String)] =
     decodeJsonAll(token, key, algorithms, JwtOptions.DEFAULT)
 
+  def decodeJsonAll(
+      token: String,
+      keys: Map[String, PublicKey],
+      algorithms: Seq[JwtAsymmetricAlgorithm]
+  ): Try[(J, J, String)] =
+    decodeJsonAll(token, keys, algorithms, JwtOptions.DEFAULT)
+
   def decodeJsonAll(token: String, key: PublicKey, options: JwtOptions): Try[(J, J, String)] =
     decodeJsonAll(token, key, JwtAlgorithm.allAsymmetric(), options)
 
+  def decodeJsonAll(token: String, keys: Map[String, PublicKey], options: JwtOptions): Try[(J, J, String)] =
+    decodeJsonAll(token, keys, JwtAlgorithm.allAsymmetric(), options)
+
   def decodeJsonAll(token: String, key: PublicKey): Try[(J, J, String)] =
     decodeJsonAll(token, key, JwtOptions.DEFAULT)
+
+  def decodeJsonAll(token: String, keys: Map[String, PublicKey]): Try[(J, J, String)] =
+    decodeJsonAll(token, keys, JwtOptions.DEFAULT)
 
   def decodeJson(token: String, options: JwtOptions): Try[J] =
     decodeJsonAll(token, options).map(_._2)
@@ -192,12 +233,30 @@ trait JwtJsonCommon[J, H, C] extends JwtCore[H, C] {
   ): Try[J] =
     decodeJsonAll(token, key, algorithms, options).map(_._2)
 
+    def decodeJson(
+      token: String,
+      keys: Map[String, PublicKey],
+      algorithms: Seq[JwtAsymmetricAlgorithm],
+      options: JwtOptions
+  ): Try[J] =
+    decodeJsonAll(token, keys, algorithms, options).map(_._2)
+
   def decodeJson(token: String, key: PublicKey, algorithms: Seq[JwtAsymmetricAlgorithm]): Try[J] =
     decodeJson(token, key, algorithms, JwtOptions.DEFAULT)
+
+  def decodeJson(token: String, keys: Map[String, PublicKey], algorithms: Seq[JwtAsymmetricAlgorithm]): Try[J] =
+    decodeJson(token, keys, algorithms, JwtOptions.DEFAULT)
+
 
   def decodeJson(token: String, key: PublicKey, options: JwtOptions): Try[J] =
     decodeJson(token, key, JwtAlgorithm.allAsymmetric(), options)
 
+  def decodeJson(token: String, keys: Map[String, PublicKey], options: JwtOptions): Try[J] =
+    decodeJson(token, keys, JwtAlgorithm.allAsymmetric(), options)
+
   def decodeJson(token: String, key: PublicKey): Try[J] =
     decodeJson(token, key, JwtOptions.DEFAULT)
+
+  def decodeJson(token: String, keys: Map[String, PublicKey]): Try[J] =
+    decodeJson(token, keys, JwtOptions.DEFAULT)
 }

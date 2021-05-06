@@ -25,6 +25,10 @@ object Jwt extends JwtCore[JwtHeader, JwtClaim] {
       case name: String => Some(JwtAlgorithm.fromString(name))
     }
 
+  private val extractKeyIdRegex = "\"kid\" *: *\"([a-zA-Z0-9]+)\"".r
+  protected def extractKeyId(header: String): Option[String] =
+    (extractKeyIdRegex findFirstMatchIn header).map(_.group(1))
+
   private val extractIssuerRegex = "\"iss\" *: *\"([a-zA-Z0-9]*)\"".r
   protected def extractIssuer(claim: String): Option[String] =
     (extractIssuerRegex findFirstMatchIn claim).map(_.group(1))
@@ -94,6 +98,7 @@ object Jwt extends JwtCore[JwtHeader, JwtClaim] {
   protected def claimToJson(claim: JwtClaim): String = claim.toJson
 
   protected def extractAlgorithm(header: JwtHeader): Option[JwtAlgorithm] = header.algorithm
+  protected def extractKeyId(header: JwtHeader): Option[String] = header.keyId
   protected def extractExpiration(claim: JwtClaim): Option[Long] = claim.expiration
   protected def extractNotBefore(claim: JwtClaim): Option[Long] = claim.notBefore
 }
@@ -103,6 +108,7 @@ class Jwt private (override val clock: Clock) extends JwtCore[JwtHeader, JwtClai
   protected def parseClaim(claim: String): JwtClaim = Jwt.parseClaim(claim)
 
   protected def extractAlgorithm(header: JwtHeader): Option[JwtAlgorithm] = header.algorithm
+  protected def extractKeyId(header: JwtHeader): Option[String] = header.keyId
   protected def extractExpiration(claim: JwtClaim): Option[Long] = claim.expiration
   protected def extractNotBefore(claim: JwtClaim): Option[Long] = claim.notBefore
 
