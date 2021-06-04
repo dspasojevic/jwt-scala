@@ -1,3 +1,4 @@
+import scala.io.Source
 import Dependencies._
 import com.jsuereth.sbtpgp.PgpKeys._
 import play.sbt.Play.autoImport._
@@ -8,8 +9,8 @@ import sbt._
 
 import scala.sys.process._
 
-val previousVersion = "7.1.3"
-val buildVersion = "7.1.4"
+val previousVersion = "8.0.0"
+val buildVersion = "8.0.1"
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -72,9 +73,9 @@ cleanScript := {
 lazy val docsMappingsAPIDir: SettingKey[String] =
   settingKey[String]("Name of subdirectory in site target directory for api docs")
 
-val scala212 = "2.12.13"
-val scala213 = "2.13.5"
-val scala3 = "3.0.0-RC3"
+val scala212 = Source.fromFile("./versions/scala212").getLines.mkString
+val scala213 = Source.fromFile("./versions/scala213").getLines.mkString
+val scala3 = Source.fromFile("./versions/scala3").getLines.mkString
 
 val crossVersionAll = Seq(scala212, scala213, scala3)
 val crossVersion2Only = Seq(scala212, scala213)
@@ -278,7 +279,6 @@ lazy val circe = project
   .settings(releaseSettings)
   .settings(
     name := "jwt-circe",
-    crossScalaVersions := crossVersion2Only,
     libraryDependencies ++= Seq(Libs.circeCore, Libs.circeParse, Libs.circeGeneric % "test")
   )
   .aggregate(jsonCommon)
